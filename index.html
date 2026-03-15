@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incident Exposure Calculator</title>
+<style>
+  :root {
+    --bg: #0c0e13;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #2a2f42;
+    --text: #e0e2ec;
+    --text-dim: #7a7f99;
+    --amber: #f5a623;
+    --amber-glow: rgba(245,166,35,0.12);
+    --cyan: #22d3ee;
+    --green: #4ade80;
+    --red: #f87171;
+    --warm: #fbbf24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .app {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--amber), #ff6b35);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.2rem;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* Controls bar */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+  }
+
+  .control-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+  }
+
+  .control-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+  }
+
+  .control-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--amber);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .control-value .unit {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+
+  .control-sub {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+  }
+
+  /* Light level input */
+  .light-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .light-input-group input[type="number"] {
+    width: 90px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .light-input-group input[type="number"]:focus {
+    border-color: var(--amber);
+  }
+
+  .light-input-group .unit-label {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+
+  .btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .btn:hover { border-color: var(--amber); color: var(--text); }
+  .btn.active { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 900px;
+  }
+
+  th, td {
+    padding: 0.45rem 0.55rem;
+    text-align: center;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    transition: background 0.1s, color 0.1s;
+  }
+
+  th {
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  thead th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+  }
+
+  .row-header {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--surface2);
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    min-width: 70px;
+  }
+
+  .row-header.full-stop { color: var(--text); }
+  .row-header.half-stop { color: var(--text-dim); font-weight: 400; font-size: 0.7rem; }
+  .row-header.tgood { color: var(--amber); font-style: italic; }
+
+  td.data-cell {
+    cursor: pointer;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  td.data-cell:hover {
+    background: var(--amber-glow) !important;
+    color: var(--amber) !important;
+    font-weight: 600;
+  }
+
+  /* Highlight states */
+  td.highlight-row { background: rgba(34,211,238,0.06); }
+  td.highlight-col { background: rgba(34,211,238,0.06); }
+  td.highlight-cross { background: rgba(245,166,35,0.18) !important; color: var(--amber) !important; font-weight: 700 !important; font-size: 0.88rem; }
+
+  th.highlight-col { background: rgba(34,211,238,0.15); color: var(--cyan); }
+  .row-header.highlight-row { background: rgba(34,211,238,0.15); color: var(--cyan) !important; }
+
+  /* Light level match highlighting */
+  td.match-exact { background: rgba(74,222,128,0.2) !important; color: var(--green) !important; font-weight: 700; }
+  td.match-close { background: rgba(251,191,36,0.12) !important; color: var(--warm) !important; }
+
+  /* Heat map */
+  .heatmap td.data-cell { font-weight: 500; }
+
+  /* Readout */
+  .readout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .readout-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    min-width: 160px;
+  }
+
+  /* Notes */
+  .notes {
+    margin-top: 1.25rem;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .notes a { color: var(--amber); text-decoration: none; }
+  .notes a:hover { text-decoration: underline; }
+
+  /* Light level reference */
+  .light-refs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.3rem 1.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .light-ref {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    padding: 0.15rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .light-ref-val { color: var(--amber); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Incident Exposure Calculator</h1>
+  <p class="subtitle">Incident foot candles at key &mdash; 24 fps / 180&deg; shutter angle</p>
+
+  <div class="controls">
+    <div class="control-group" id="readout-box">
+      <div class="control-label">Selected Exposure</div>
+      <div class="control-value" id="readout-fc">&mdash; <span class="unit">fc</span></div>
+      <div class="control-sub" id="readout-detail">Click any cell</div>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">Find by Available Light</div>
+      <div class="light-input-group">
+        <input type="number" id="light-input" placeholder="e.g. 50" min="0" step="1">
+        <span class="unit-label">fc</span>
+        <button class="btn" id="light-clear" title="Clear">Clear</button>
+      </div>
+      <div class="control-sub">Enter foot candles to highlight matching settings</div>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">Display</div>
+      <div style="display:flex;gap:0.4rem;">
+        <button class="btn active" id="btn-heatmap" title="Color-code values by light level">Heat Map</button>
+        <button class="btn" id="btn-halfstops" title="Show/hide half-stop rows">Half Stops</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="exposure-table">
+      <thead id="table-head"></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <div class="readout" id="extra-readout" style="display:none;">
+    <div class="readout-card">
+      <div class="control-label">Exposure Value (EV)</div>
+      <div class="control-value" id="readout-ev">&mdash;</div>
+    </div>
+    <div class="readout-card">
+      <div class="control-label">Scene Brightness</div>
+      <div class="control-value" id="readout-lux">&mdash; <span class="unit">lux</span></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="control-label" style="margin-bottom:0.4rem;">Common Light Levels (Incident fc)</div>
+    <div class="light-refs" id="light-refs"></div>
+    <br>
+    <p>* Reflected readings also valid from camera position if made from an 18% grey target.</p>
+    <p>Adapted from <a href="https://cinematography.net/edited-pages/exposure.html">cinematography.net</a> (CML, credit to Geoff Boyle NSC FBKS, 1950&ndash;2021).</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Data
+  var ISOS = [100, 160, 200, 320, 400, 640, 800, 1280, 1600, 2500, 3200, 4000, 6400];
+
+  var TSTOPS = [
+    { label: 'T2.8',  value: 2.8,  type: 'full' },
+    { label: 'T\u2009Good', value: 3.3,  type: 'tgood' },
+    { label: 'T4',    value: 4,    type: 'full' },
+    { label: '/',     value: 4.8,  type: 'half' },
+    { label: 'T5.6',  value: 5.6,  type: 'full' },
+    { label: '/',     value: 6.7,  type: 'half' },
+    { label: 'T8',    value: 8,    type: 'full' },
+    { label: '/',     value: 9.5,  type: 'half' },
+    { label: 'T11',   value: 11,   type: 'full' },
+    { label: '/',     value: 13.5, type: 'half' },
+    { label: 'T16',   value: 16,   type: 'full' },
+    { label: '/',     value: 19,   type: 'half' },
+    { label: 'T22',   value: 22,   type: 'full' }
+  ];
+
+  // The exposure value sequence (1/3-stop increments, practical rounding)
+  var VALS = [1.56, 2.35, 3.13, 4.7, 6.25, 9.375, 12.5, 18.75, 25, 37.5, 50, 75, 100,
+              150, 200, 300, 400, 600, 800, 1200, 1600, 2400, 3200, 4800, 6400];
+
+  // Index 12 = 100 fc = T2.8 @ ISO 100 (the anchor)
+  // For row r, col c: val_index = 12 + r - c
+  function getFC(row, col) {
+    var idx = 12 + row - col;
+    if (idx < 0 || idx >= VALS.length) return null;
+    return VALS[idx];
+  }
+
+  // Format fc value for display — match spreadsheet precision
+  function fmtFC(fc) {
+    if (fc === null) return '\u2014';
+    // Show exact value: strip trailing zeros after decimal
+    if (fc === Math.floor(fc)) return fc.toLocaleString();
+    // Up to 3 decimal places, then strip trailing zeros
+    var s = fc.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+    return s;
+  }
+
+  // Light level references
+  var LIGHT_REFS = [
+    { label: 'Candle at 1ft', fc: 1 },
+    { label: 'Dimly lit interior', fc: 5 },
+    { label: 'Living room (evening)', fc: 20 },
+    { label: 'Office fluorescent', fc: 50 },
+    { label: 'Well-lit office', fc: 100 },
+    { label: 'TV studio lighting', fc: 150 },
+    { label: 'Bright interior / overcast ext.', fc: 250 },
+    { label: 'Bright overcast day', fc: 500 },
+    { label: 'Hazy sun', fc: 1000 },
+    { label: 'Sunny day (open shade)', fc: 2500 },
+    { label: 'Direct sunlight', fc: 5000 },
+    { label: 'Bright sunlight (sand/snow)', fc: 8000 }
+  ];
+
+  // State
+  var selectedRow = -1;
+  var selectedCol = -1;
+  var showHeatmap = true;
+  var showHalfStops = true;
+  var lightTarget = null;
+
+  // Build table
+  function buildTable() {
+    var thead = document.getElementById('table-head');
+    var headerHTML = '<tr><th>T-Stop \\ ISO</th>';
+    for (var c = 0; c < ISOS.length; c++) {
+      headerHTML += '<th id="th-' + c + '">' + ISOS[c].toLocaleString() + '</th>';
+    }
+    headerHTML += '</tr>';
+    thead.innerHTML = headerHTML;
+
+    var tbody = document.getElementById('table-body');
+    var bodyHTML = '';
+    for (var r = 0; r < TSTOPS.length; r++) {
+      var ts = TSTOPS[r];
+      var rowClass = ts.type === 'full' ? 'full-stop' : (ts.type === 'tgood' ? 'tgood' : 'half-stop');
+      var hideClass = ts.type === 'half' ? ' half-stop-row' : '';
+      bodyHTML += '<tr class="' + hideClass + '" id="tr-' + r + '">';
+      bodyHTML += '<td class="row-header ' + rowClass + '" id="rh-' + r + '">' + ts.label + '</td>';
+      for (var c = 0; c < ISOS.length; c++) {
+        var fc = getFC(r, c);
+        bodyHTML += '<td class="data-cell" id="cell-' + r + '-' + c + '" ' +
+          'data-row="' + r + '" data-col="' + c + '" data-fc="' + fc + '">' +
+          fmtFC(fc) + '</td>';
+      }
+      bodyHTML += '</tr>';
+    }
+    tbody.innerHTML = bodyHTML;
+
+    // Add click handlers
+    var cells = tbody.querySelectorAll('.data-cell');
+    cells.forEach(function(cell) {
+      cell.addEventListener('click', function() {
+        var r = parseInt(this.dataset.row);
+        var c = parseInt(this.dataset.col);
+        selectCell(r, c);
+      });
+    });
+  }
+
+  function selectCell(r, c) {
+    selectedRow = r;
+    selectedCol = c;
+    updateHighlights();
+
+    var fc = getFC(r, c);
+    document.getElementById('readout-fc').innerHTML = fmtFC(fc) + ' <span class="unit">fc</span>';
+    document.getElementById('readout-detail').textContent =
+      TSTOPS[r].label + ' @ ISO ' + ISOS[c].toLocaleString();
+
+    // Extra readout
+    var extra = document.getElementById('extra-readout');
+    extra.style.display = 'flex';
+
+    // Lux (1 fc ≈ 10.764 lux)
+    var lux = fc * 10.764;
+    document.getElementById('readout-lux').innerHTML =
+      (lux >= 10 ? Math.round(lux).toLocaleString() : lux.toFixed(1)) + ' <span class="unit">lux</span>';
+
+    // EV (approximate): EV = log2(fc / 2.5) roughly at ISO 100
+    // More precisely: EV = log2(T² / t) where t = 1/48
+    // EV_100 = log2(N² / t) and fc relates via calibration
+    var ev100 = Math.log2(fc / 2.5);
+    document.getElementById('readout-ev').textContent = ev100.toFixed(1);
+  }
+
+  function updateHighlights() {
+    // Clear all highlights
+    var allCells = document.querySelectorAll('.data-cell');
+    allCells.forEach(function(cell) {
+      cell.classList.remove('highlight-row', 'highlight-col', 'highlight-cross', 'match-exact', 'match-close');
+    });
+    document.querySelectorAll('th').forEach(function(th) { th.classList.remove('highlight-col'); });
+    document.querySelectorAll('.row-header').forEach(function(rh) { rh.classList.remove('highlight-row'); });
+
+    // Selection highlights
+    if (selectedRow >= 0 && selectedCol >= 0) {
+      for (var c = 0; c < ISOS.length; c++) {
+        var cell = document.getElementById('cell-' + selectedRow + '-' + c);
+        if (cell) cell.classList.add('highlight-row');
+      }
+      for (var r = 0; r < TSTOPS.length; r++) {
+        var cell = document.getElementById('cell-' + r + '-' + selectedCol);
+        if (cell) cell.classList.add('highlight-col');
+      }
+      var cross = document.getElementById('cell-' + selectedRow + '-' + selectedCol);
+      if (cross) cross.classList.add('highlight-cross');
+
+      document.getElementById('th-' + selectedCol).classList.add('highlight-col');
+      document.getElementById('rh-' + selectedRow).classList.add('highlight-row');
+    }
+
+    // Light level matching
+    if (lightTarget !== null && lightTarget > 0) {
+      allCells.forEach(function(cell) {
+        var fc = parseFloat(cell.dataset.fc);
+        if (isNaN(fc)) return;
+        var ratio = fc / lightTarget;
+        if (ratio >= 0.95 && ratio <= 1.05) {
+          cell.classList.add('match-exact');
+        } else if (ratio >= 0.5 && ratio <= 2.0) {
+          cell.classList.add('match-close');
+        }
+      });
+    }
+
+    // Heat map
+    applyHeatmap();
+  }
+
+  function applyHeatmap() {
+    var allCells = document.querySelectorAll('.data-cell');
+    allCells.forEach(function(cell) {
+      if (!showHeatmap) {
+        cell.style.backgroundColor = '';
+        cell.style.color = '';
+        return;
+      }
+
+      // Skip if has other highlight
+      if (cell.classList.contains('highlight-cross') ||
+          cell.classList.contains('match-exact') ||
+          cell.classList.contains('match-close')) {
+        return;
+      }
+
+      var fc = parseFloat(cell.dataset.fc);
+      if (isNaN(fc)) return;
+
+      // Log scale: map fc range to hue
+      var logMin = Math.log10(1);     // ~1 fc
+      var logMax = Math.log10(7000);  // ~7000 fc
+      var logVal = Math.log10(Math.max(fc, 1));
+      var t = (logVal - logMin) / (logMax - logMin); // 0 = dark, 1 = bright
+
+      // Dark scenes = cool blue/purple, bright = warm amber/yellow
+      var h, s, l;
+      if (t < 0.3) {
+        // Very low light: deep blue-purple
+        h = 240 + (1 - t / 0.3) * 30;
+        s = 40; l = 12 + t * 15;
+      } else if (t < 0.6) {
+        // Mid: teal to green
+        h = 180 - ((t - 0.3) / 0.3) * 40;
+        s = 30; l = 16 + (t - 0.3) * 20;
+      } else {
+        // Bright: amber to yellow
+        h = 40 - ((t - 0.6) / 0.4) * 10;
+        s = 50; l = 18 + (t - 0.6) * 15;
+      }
+
+      cell.style.backgroundColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
+      cell.style.color = '';
+    });
+  }
+
+  // Light refs
+  function buildLightRefs() {
+    var html = '';
+    LIGHT_REFS.forEach(function(ref) {
+      html += '<div class="light-ref"><span>' + ref.label + '</span><span class="light-ref-val">' +
+        ref.fc.toLocaleString() + ' fc</span></div>';
+    });
+    document.getElementById('light-refs').innerHTML = html;
+  }
+
+  // Event handlers
+  document.getElementById('light-input').addEventListener('input', function() {
+    var v = parseFloat(this.value);
+    lightTarget = isNaN(v) ? null : v;
+    updateHighlights();
+  });
+
+  document.getElementById('light-clear').addEventListener('click', function() {
+    document.getElementById('light-input').value = '';
+    lightTarget = null;
+    updateHighlights();
+  });
+
+  document.getElementById('btn-heatmap').addEventListener('click', function() {
+    showHeatmap = !showHeatmap;
+    this.classList.toggle('active', showHeatmap);
+    if (!showHeatmap) {
+      document.querySelectorAll('.data-cell').forEach(function(c) {
+        c.style.backgroundColor = '';
+        c.style.color = '';
+      });
+    }
+    updateHighlights();
+  });
+
+  document.getElementById('btn-halfstops').addEventListener('click', function() {
+    showHalfStops = !showHalfStops;
+    this.classList.toggle('active', showHalfStops);
+    document.querySelectorAll('.half-stop-row').forEach(function(row) {
+      row.style.display = showHalfStops ? '' : 'none';
+    });
+  });
+
+  // Init
+  buildTable();
+  buildLightRefs();
+  updateHighlights();
+})();
+</script>
+</body>
+</html>
