@@ -319,7 +319,8 @@
     <div class="control-label" style="margin-bottom:0.4rem;">Common Light Levels (Incident fc)</div>
     <div class="light-refs" id="light-refs"></div>
     <br>
-    <p>* Reflected readings also valid from camera position if made from an 18% grey target.</p>
+    <p>Reflected readings also valid from camera position if made from an 18% grey target.</p>
+    <p>* <strong>T.Good</strong> (pronounced &ldquo;tee-dot-good&rdquo;) &mdash; the half-stop split between T2.8 and T4. This is the conventional default lens aperture used as a starting point, e.g. when the DP of record (or on set that day) has not yet called out what the stop should be.</p>
     <p>Adapted from <a href="https://cinematography.net/edited-pages/exposure.html">cinematography.net</a> (CML, credit to Geoff Boyle NSC FBKS, 1950&ndash;2021).</p>
   </div>
 </div>
@@ -331,7 +332,7 @@
 
   var TSTOPS = [
     { label: 'T2.8',  value: 2.8,  type: 'full' },
-    { label: 'T\u2009Good', value: 3.3,  type: 'tgood' },
+    { label: 'T.Good*', value: 3.3,  type: 'tgood' },
     { label: 'T4',    value: 4,    type: 'full' },
     { label: '/',     value: 4.8,  type: 'half' },
     { label: 'T5.6',  value: 5.6,  type: 'full' },
