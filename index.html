@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Incident Exposure Calculator</title>
+<title>Incident Exposure Matrix</title>
 <style>
   :root {
     --bg: #0c0e13;
@@ -268,7 +268,7 @@
 </head>
 <body>
 <div class="app">
-  <h1>Incident Exposure Calculator</h1>
+  <h1>Incident Exposure Matrix</h1>
   <p class="subtitle">Incident foot candles at key &mdash; 24 fps / 180&deg; shutter angle</p>
 
   <div class="controls">
@@ -292,7 +292,7 @@
       <div class="control-label">Display</div>
       <div style="display:flex;gap:0.4rem;">
         <button class="btn active" id="btn-heatmap" title="Color-code values by light level">Heat Map</button>
-        <button class="btn" id="btn-halfstops" title="Show/hide half-stop rows">Half Stops</button>
+        <button class="btn active" id="btn-halfstops" title="Show/hide half-stop rows">Half Stops</button>
       </div>
     </div>
   </div>
@@ -319,9 +319,12 @@
     <div class="control-label" style="margin-bottom:0.4rem;">Common Light Levels (Incident fc)</div>
     <div class="light-refs" id="light-refs"></div>
     <br>
-    <p>Reflected readings also valid from camera position if made from an 18% grey target.</p>
-    <p>* <strong>T.Good</strong> (pronounced &ldquo;tee-dot-good&rdquo;) &mdash; the half-stop split between T2.8 and T4. This is the conventional default lens aperture used as a starting point, e.g. when the DP of record (or on set that day) has not yet called out what the stop should be.</p>
-    <p>Adapted from <a href="https://cinematography.net/edited-pages/exposure.html">cinematography.net</a> (CML, credit to Geoff Boyle NSC FBKS, 1950&ndash;2021).</p>
+    <b>Notes:</b>
+    <p>Reflected readings also valid at camera position if made from an 18% grey target.</p>
+    <p>1 foot candle = 1 lumen/sq. foot = <b>10.76 Lux</b> (SI unit for <b>illuminance</b>)</p>
+    <p>If R(eflectance) = 1.0, then 1 foot candle = 1 foot-lambert = <b>3.426 candelas/sq. meter</b> (SI unit for <b>luminance</b>)</p>
+    <p>* <strong>T.Good</strong> (pronounced &ldquo;tee-dot-good&rdquo;) &mdash; the half-stop split between T2.8 and T4. East Coast (?) convention for default/starting point lens aperture, such as when the DP has not yet called out what our stop should be.</p>
+    <p>Adapted from <a href="https://cinematography.net/edited-pages/exposure.html">this chart on CML/cinematography.net</a> by Geoff Boyle NSC FBKS (&dagger;2021)</p>
   </div>
 </div>
 
@@ -370,7 +373,7 @@
 
   // Light level references
   var LIGHT_REFS = [
-    { label: 'Candle at 1ft', fc: 1 },
+    { label: '"Standard" candle at 1ft', fc: 1 },
     { label: 'Dimly lit interior', fc: 5 },
     { label: 'Living room (evening)', fc: 20 },
     { label: 'Office fluorescent', fc: 50 },
@@ -449,10 +452,9 @@
     document.getElementById('readout-lux').innerHTML =
       (lux >= 10 ? Math.round(lux).toLocaleString() : lux.toFixed(1)) + ' <span class="unit">lux</span>';
 
-    // EV (approximate): EV = log2(fc / 2.5) roughly at ISO 100
-    // More precisely: EV = log2(T² / t) where t = 1/48
-    // EV_100 = log2(N² / t) and fc relates via calibration
-    var ev100 = Math.log2(fc / 2.5);
+    // EV₁₀₀ = log₂(E_lux × ISO / C) where C=250 (incident meter calibration), ISO=100
+    // Simplifies to log₂(lux / 2.5)
+    var ev100 = Math.log2(lux / 2.5);
     document.getElementById('readout-ev').textContent = ev100.toFixed(1);
   }
 
