@@ -29,7 +29,7 @@ No installation needed. It's a single HTML file with no dependencies.
 ## Notes
 
 - Reflected readings are also valid from camera position if made from an 18% grey target
-- Adapted from [cinematography.net](https://cinematography.net/edited-pages/exposure.html) (CML, credit to Geoff Boyle NSC FBKS, 1950–2021)
+- Adapted from [cinematography.net](https://cinematography.net/edited-pages/exposure.html) (CML) in memory of Geoff Boyle NSC FBKS
 
 ## License
 
