@@ -1,401 +1,490 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Incident Exposure Matrix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        },
+        colors: {
+          ink: {
+            950: '#07080b',
+            900: '#0b0d12',
+            850: '#0f1218',
+            800: '#12161f',
+            750: '#161b26',
+            700: '#1d2330',
+            600: '#2a3142',
+            500: '#3a4358',
+          },
+          accent: {
+            DEFAULT: '#ff2e4d',
+            glow: '#ff3b5c',
+            soft: '#ff6b82',
+          },
+          cyan2: '#22d3ee',
+          lime2: '#a3e635',
+          amber2: '#fbbf24',
+        },
+      },
+    },
+  };
+</script>
 <style>
-  :root {
-    --bg: #0c0e13;
-    --surface: #151820;
-    --surface2: #1c2030;
-    --border: #2a2f42;
-    --text: #e0e2ec;
-    --text-dim: #7a7f99;
-    --amber: #f5a623;
-    --amber-glow: rgba(245,166,35,0.12);
-    --cyan: #22d3ee;
-    --green: #4ade80;
-    --red: #f87171;
-    --warm: #fbbf24;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
+  html, body { background: #07080b; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv11","ss01","ss03";
+    color: #e6e8ef;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(255,46,77,0.08), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(251,191,36,0.05), transparent 60%),
+      #07080b;
     min-height: 100vh;
   }
-
-  .app {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 1.5rem 1rem;
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-feature-settings: "zero","ss01","tnum"; }
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    backdrop-filter: blur(6px);
   }
-
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    background: linear-gradient(135deg, var(--amber), #ff6b35);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.2rem;
+  .hairline { border-color: rgba(255,255,255,0.07); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+    color: #c7cbd6;
+    font-weight: 500;
   }
+  .section-title { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #8a93a6; }
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent); }
+  .stat-value { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","zero"; letter-spacing: -0.02em; }
 
-  .subtitle {
-    color: var(--text-dim);
-    font-size: 0.8rem;
-    margin-bottom: 1.25rem;
-  }
-
-  /* Controls bar */
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: flex-end;
-    margin-bottom: 1rem;
-  }
-
-  .control-group {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-  }
-
-  .control-label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
-    margin-bottom: 0.35rem;
-  }
-
-  .control-value {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--amber);
+  input[type="number"] {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #f1f3f8;
+    border-radius: 10px; padding: 8px 12px;
     font-variant-numeric: tabular-nums;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    transition: border-color 150ms ease, background 150ms ease;
+    width: 110px;
   }
-
-  .control-value .unit {
-    font-size: 0.7rem;
-    font-weight: 400;
-    color: var(--text-dim);
-  }
-
-  .control-sub {
-    font-size: 0.68rem;
-    color: var(--text-dim);
-    margin-top: 0.1rem;
-  }
-
-  /* Light level input */
-  .light-input-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .light-input-group input[type="number"] {
-    width: 90px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    padding: 0.4rem 0.6rem;
-    font-size: 0.9rem;
-    font-family: inherit;
+  input[type="number"]:focus {
     outline: none;
-    font-variant-numeric: tabular-nums;
+    border-color: rgba(255,46,77,0.7);
+    background: rgba(255,46,77,0.06);
   }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
 
-  .light-input-group input[type="number"]:focus {
-    border-color: var(--amber);
-  }
-
-  .light-input-group .unit-label {
-    color: var(--text-dim);
-    font-size: 0.75rem;
-  }
-
-  .btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text-dim);
-    font-size: 0.72rem;
-    padding: 0.35rem 0.7rem;
+  .ghost-btn {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+    padding: 8px 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #c7cbd6;
+    transition: all 150ms ease;
     cursor: pointer;
     font-family: inherit;
-    transition: all 0.15s;
+  }
+  .ghost-btn:hover { background: rgba(255,46,77,0.08); border-color: rgba(255,46,77,0.35); color: #fff; }
+  .ghost-btn.active {
+    background: rgba(255,46,77,0.12);
+    border-color: rgba(255,46,77,0.55);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255,46,77,0.25);
   }
 
-  .btn:hover { border-color: var(--amber); color: var(--text); }
-  .btn.active { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+  .pill-good { background: rgba(163,230,53,0.12); border: 1px solid rgba(163,230,53,0.4); color: #a3e635; }
+  .pill-info { background: rgba(34,211,238,0.10); border: 1px solid rgba(34,211,238,0.4); color: #22d3ee; }
+  .pill-warn { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.4); color: #fbbf24; }
 
-  /* Table */
+  ::selection { background: rgba(255,46,77,0.4); color: #fff; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+  /* ===== Exposure Matrix Table ===== */
   .table-wrap {
     overflow-x: auto;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: #0a0c11;
+    position: relative;
   }
+  .table-wrap::-webkit-scrollbar { height: 8px; }
 
-  table {
-    border-collapse: collapse;
+  table.matrix {
+    border-collapse: separate;
+    border-spacing: 0;
     width: 100%;
-    min-width: 900px;
-  }
-
-  th, td {
-    padding: 0.45rem 0.55rem;
-    text-align: center;
-    font-size: 0.78rem;
+    min-width: 980px;
     font-variant-numeric: tabular-nums;
-    border: 1px solid var(--border);
+    font-feature-settings: "tnum","zero";
+  }
+  table.matrix th,
+  table.matrix td {
+    padding: 10px 10px;
+    text-align: center;
+    font-size: 12.5px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     white-space: nowrap;
-    transition: background 0.1s, color 0.1s;
+    transition: background 120ms ease, color 120ms ease;
+    font-family: 'JetBrains Mono', monospace;
   }
-
-  th {
-    background: var(--surface2);
-    color: var(--text-dim);
+  table.matrix thead th {
+    background: rgba(255,255,255,0.03);
+    color: #8a93a6;
     font-weight: 600;
-    position: sticky;
-    top: 0;
-    z-index: 2;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    position: sticky; top: 0; z-index: 3;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
   }
-
-  thead th:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 3;
-  }
-
-  .row-header {
+  table.matrix thead th:first-child {
+    position: sticky; left: 0; z-index: 4;
+    background: rgba(20,23,32,1);
     text-align: right;
-    font-weight: 600;
-    color: var(--text-dim);
-    background: var(--surface2);
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    min-width: 70px;
+    padding-right: 14px;
   }
+  table.matrix tbody td.row-header {
+    position: sticky; left: 0; z-index: 2;
+    background: rgba(20,23,32,0.98);
+    text-align: right;
+    padding-right: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #c7cbd6;
+    border-right: 1px solid rgba(255,255,255,0.12);
+    min-width: 84px;
+  }
+  table.matrix tbody td.row-header.full-stop { color: #fff; letter-spacing: 0.02em; }
+  table.matrix tbody td.row-header.half-stop { color: #5f6679; font-weight: 400; font-size: 11px; }
+  table.matrix tbody td.row-header.tgood      { color: #fbbf24; font-style: italic; }
 
-  .row-header.full-stop { color: var(--text); }
-  .row-header.half-stop { color: var(--text-dim); font-weight: 400; font-size: 0.7rem; }
-  .row-header.tgood { color: var(--amber); font-style: italic; }
-
-  td.data-cell {
+  table.matrix td.data-cell {
+    color: #d3d7e0;
     cursor: pointer;
-    color: var(--text);
-    font-weight: 400;
+    font-weight: 500;
+  }
+  table.matrix td.data-cell:hover {
+    background: rgba(255,46,77,0.14) !important;
+    color: #fff !important;
+    font-weight: 700;
   }
 
-  td.data-cell:hover {
-    background: var(--amber-glow) !important;
-    color: var(--amber) !important;
-    font-weight: 600;
+  /* selection cross */
+  table.matrix td.highlight-row { background: rgba(34,211,238,0.07); color: #e6f8fb; }
+  table.matrix td.highlight-col { background: rgba(34,211,238,0.07); color: #e6f8fb; }
+  table.matrix td.highlight-cross {
+    background: rgba(255,46,77,0.22) !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    font-size: 14px;
+    box-shadow: inset 0 0 0 1px rgba(255,46,77,0.65);
+  }
+  table.matrix thead th.highlight-col {
+    background: rgba(34,211,238,0.16) !important;
+    color: #22d3ee !important;
+  }
+  table.matrix tbody td.row-header.highlight-row {
+    background: rgba(34,211,238,0.16) !important;
+    color: #22d3ee !important;
   }
 
-  /* Highlight states */
-  td.highlight-row { background: rgba(34,211,238,0.06); }
-  td.highlight-col { background: rgba(34,211,238,0.06); }
-  td.highlight-cross { background: rgba(245,166,35,0.18) !important; color: var(--amber) !important; font-weight: 700 !important; font-size: 0.88rem; }
-
-  th.highlight-col { background: rgba(34,211,238,0.15); color: var(--cyan); }
-  .row-header.highlight-row { background: rgba(34,211,238,0.15); color: var(--cyan) !important; }
-
-  /* Light level match highlighting */
-  td.match-exact { background: rgba(74,222,128,0.2) !important; color: var(--green) !important; font-weight: 700; }
-  td.match-close { background: rgba(251,191,36,0.12) !important; color: var(--warm) !important; }
-
-  /* Heat map */
-  .heatmap td.data-cell { font-weight: 500; }
-
-  /* Readout */
-  .readout {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 1rem;
+  /* match by light level */
+  table.matrix td.match-exact {
+    background: rgba(163,230,53,0.22) !important;
+    color: #ecfccb !important;
+    font-weight: 800;
+    box-shadow: inset 0 0 0 1px rgba(163,230,53,0.55);
+  }
+  table.matrix td.match-close {
+    background: rgba(251,191,36,0.14) !important;
+    color: #fde68a !important;
   }
 
-  .readout-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    min-width: 160px;
-  }
-
-  /* Notes */
-  .notes {
-    margin-top: 1.25rem;
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    line-height: 1.6;
-  }
-
-  .notes a { color: var(--amber); text-decoration: none; }
-  .notes a:hover { text-decoration: underline; }
-
-  /* Light level reference */
-  .light-refs {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.3rem 1.5rem;
-    margin-top: 0.75rem;
-  }
-
+  /* light ref rows */
   .light-ref {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.7rem;
-    padding: 0.15rem 0;
-    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    break-inside: avoid;
   }
-
-  .light-ref-val { color: var(--amber); font-weight: 500; }
+  .light-ref-label { color: rgba(255,255,255,0.65); }
+  .light-ref-val {
+    font-family: 'JetBrains Mono', monospace;
+    color: #fbbf24;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
 </style>
 </head>
-<body>
-<div class="app">
-  <h1>Incident Exposure Matrix</h1>
-  <p class="subtitle">Incident foot candles at key &mdash; 24 fps / 180&deg; shutter angle</p>
+<body class="min-h-screen">
 
-  <div class="controls">
-    <div class="control-group" id="readout-box">
-      <div class="control-label">Selected Exposure</div>
-      <div class="control-value" id="readout-fc">&mdash; <span class="unit">fc</span></div>
-      <div class="control-sub" id="readout-detail">Click any cell</div>
-    </div>
-
-    <div class="control-group">
-      <div class="control-label">Find by Available Light</div>
-      <div class="light-input-group">
-        <input type="number" id="light-input" placeholder="e.g. 50" min="0" step="1">
-        <span class="unit-label">fc</span>
-        <button class="btn" id="light-clear" title="Clear">Clear</button>
+<!-- Header -->
+<header class="relative border-b hairline">
+  <div class="max-w-[1400px] mx-auto px-5 sm:px-8 py-5 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center relative"
+           style="background:linear-gradient(135deg,#ff2e4d,#7a0a1c);box-shadow:0 8px 30px rgba(255,46,77,.35),inset 0 1px 0 rgba(255,255,255,.25);">
+        <i data-lucide="aperture" class="w-5 h-5 text-white"></i>
       </div>
-      <div class="control-sub">Enter foot candles to highlight matching settings</div>
-    </div>
-
-    <div class="control-group">
-      <div class="control-label">Display</div>
-      <div style="display:flex;gap:0.4rem;">
-        <button class="btn active" id="btn-heatmap" title="Color-code values by light level">Heat Map</button>
-        <button class="btn active" id="btn-halfstops" title="Show/hide half-stop rows">Half Stops</button>
+      <div class="leading-tight">
+        <div class="text-[11px] tracking-[0.18em] text-white/50 font-medium">CINEMATOGRAPHY TOOLS</div>
+        <h1 class="text-[17px] sm:text-[19px] font-semibold tracking-tight">Incident Exposure Matrix</h1>
       </div>
     </div>
-  </div>
-
-  <div class="table-wrap">
-    <table id="exposure-table">
-      <thead id="table-head"></thead>
-      <tbody id="table-body"></tbody>
-    </table>
-  </div>
-
-  <div class="readout" id="extra-readout" style="display:none;">
-    <div class="readout-card">
-      <div class="control-label">Exposure Value (EV)</div>
-      <div class="control-value" id="readout-ev">&mdash;</div>
-    </div>
-    <div class="readout-card">
-      <div class="control-label">Scene Brightness</div>
-      <div class="control-value" id="readout-lux">&mdash; <span class="unit">lux</span></div>
+    <div class="hidden sm:flex items-center gap-2">
+      <span class="chip mono">v1.0</span>
     </div>
   </div>
+</header>
 
-  <div class="notes">
-    <div class="control-label" style="margin-bottom:0.4rem;">Common Light Levels (Incident fc)</div>
-    <div class="light-refs" id="light-refs"></div>
-    <br>
-    <b>Notes:</b>
-    <p>Reflected readings also valid at camera position if made from an 18% grey target.</p>
-    <p>1 foot candle = 1 lumen/sq. foot = <b>10.76 Lux</b> (SI unit for <b>illuminance</b>)</p>
-    <p>If R(eflectance) = 1.0, then 1 foot candle = 1 foot-lambert = <b>3.426 candelas/sq. meter</b> (SI unit for <b>luminance</b>)</p>
-    <p>* <strong>T.Good</strong> (pronounced &ldquo;tee-dot-good&rdquo;) &mdash; the half-stop split between T2.8 and T4. East Coast (?) convention for default/starting point lens aperture, such as when the DP has not yet called out what our stop should be.</p>
-    <p>Adapted from/in memory of <a href="https://cinematography.net/edited-pages/exposure.html">this chart on CML/cinematography.net</a> by Geoff Boyle NSC FBKS</p>
+<!-- Main -->
+<main class="max-w-[1400px] mx-auto px-5 sm:px-8 py-6 sm:py-10">
+
+  <!-- Intro -->
+  <div class="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+    <div>
+      <div class="text-[11px] tracking-[0.16em] text-accent/90 font-semibold mb-2">T-STOPS · ISO · FOOT CANDLES</div>
+      <h2 class="text-2xl sm:text-4xl font-bold tracking-tight leading-[1.05]">
+        Match incident light to exposure. <span class="text-white/50">Instantly.</span>
+      </h2>
+      <p class="text-sm text-white/55 mt-2 max-w-2xl">
+        Incident foot candles required for key exposure at 24&nbsp;fps / 180° shutter. Click any cell to pin a reading, or type an ambient fc to find the closest matching stops across ISO @ <strong class="font-bold text-white/75">24 FPS + 180° shutter</strong>.
+      </p>
+    </div>
   </div>
-</div>
+
+  <!-- Top controls: three cards -->
+  <div class="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr] gap-4 sm:gap-5 mb-5 sm:mb-6">
+
+    <!-- Selected Exposure -->
+    <div class="card p-5 relative overflow-hidden">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="target" class="w-3.5 h-3.5"></i> SELECTED EXPOSURE
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span id="readout-fc" class="stat-value text-[34px] sm:text-[42px] font-bold">—</span>
+        <span class="stat-value text-[22px] sm:text-[26px] font-bold text-white/40">fc</span>
+      </div>
+      <div class="text-[11px] text-white/45 mt-1 mono" id="readout-detail">Click any cell</div>
+    </div>
+
+    <!-- Find by available light -->
+    <div class="card p-5">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="sun" class="w-3.5 h-3.5"></i> FIND BY AVAILABLE LIGHT
+      </div>
+      <div class="mt-3 flex items-center gap-2">
+        <input type="number" id="light-input" placeholder="e.g. 50" min="0" step="1" class="flex-1">
+        <span class="text-[11px] text-white/50 mono">fc</span>
+        <button class="ghost-btn" id="light-clear" title="Clear">CLEAR</button>
+      </div>
+      <div class="text-[11px] text-white/45 mt-2 flex items-center gap-2">
+        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm" style="background:#a3e635"></span>±5%</span>
+        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm" style="background:#fbbf24"></span>within ±1&nbsp;stop</span>
+      </div>
+    </div>
+
+    <!-- Display toggles -->
+    <div class="card p-5">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> DISPLAY
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button class="ghost-btn active" id="btn-heatmap" title="Color-code values by light level">HEAT MAP</button>
+        <button class="ghost-btn active" id="btn-halfstops" title="Show/hide half-stop rows">HALF STOPS</button>
+      </div>
+      <div class="text-[11px] text-white/45 mt-2.5 mono">visual density options</div>
+    </div>
+
+  </div>
+
+  <!-- Extra readout (appears when a cell is selected) -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6" id="extra-readout" style="display:none;">
+    <div class="card p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="activity" class="w-3.5 h-3.5"></i> EXPOSURE VALUE
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span id="readout-ev" class="stat-value text-[30px] sm:text-[34px] font-bold">—</span>
+        <span class="text-white/40 text-[11px] font-medium mono mb-1">EV₁₀₀</span>
+      </div>
+    </div>
+    <div class="card p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i> ILLUMINANCE
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span id="readout-lux" class="stat-value text-[30px] sm:text-[34px] font-bold">—</span>
+        <span class="stat-value text-[20px] sm:text-[22px] font-bold text-white/40">lux</span>
+      </div>
+    </div>
+    <div class="card p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="camera" class="w-3.5 h-3.5"></i> T-STOP
+      </div>
+      <div class="mt-2 stat-value text-[30px] sm:text-[34px] font-bold" id="readout-tstop">—</div>
+    </div>
+    <div class="card p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="film" class="w-3.5 h-3.5"></i> SENSITIVITY
+      </div>
+      <div class="mt-2 flex items-baseline gap-1.5">
+        <span class="stat-value text-[30px] sm:text-[34px] font-bold" id="readout-iso">—</span>
+        <span class="text-white/40 text-[11px] font-medium mono mb-1">ISO</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Matrix -->
+  <div class="card p-4 sm:p-5">
+    <div class="flex items-center justify-between mb-3 px-1">
+      <div class="section-title">Exposure Matrix</div>
+      <div class="text-[10px] text-white/40 mono hidden sm:block">click a cell to pin · hover any value to preview</div>
+    </div>
+    <div class="table-wrap">
+      <table class="matrix" id="exposure-table">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Common Light Levels -->
+  <div class="card p-5 sm:p-6 mt-5 sm:mt-6">
+    <div class="flex items-center justify-between mb-2">
+      <div class="section-title">Common Light Levels · Incident fc</div>
+      <span class="chip pill-warn mono">REFERENCE</span>
+    </div>
+    <div class="columns-1 sm:columns-2 lg:columns-3 gap-x-8" id="light-refs"></div>
+  </div>
+
+  <!-- Notes -->
+  <div class="card p-5 sm:p-6 mt-5 sm:mt-6">
+    <div class="section-title mb-3">Notes</div>
+    <div class="text-[12.5px] text-white/65 leading-relaxed space-y-2">
+      <p>Reflected readings also valid at camera position if made from an 18% grey target.</p>
+      <p>1 foot candle = 1 lumen/sq. foot = <span class="mono text-white">10.76 lux</span> (SI unit for <span class="text-white">illuminance</span>).</p>
+      <p>If R(eflectance) = 1.0, then 1 foot candle = 1 foot-lambert = <span class="mono text-white">3.426 cd/m²</span> (SI unit for <span class="text-white">luminance</span>).</p>
+      <p><span class="text-amber2 italic font-semibold">T.Good</span> (pronounced &ldquo;tee-dot-good&rdquo;) — the half-stop split between T2.8 and T4. East Coast convention for a default/starting-point lens aperture, such as when the DP has not yet called out a stop.</p>
+    </div>
+  </div>
+
+  <footer class="mt-10 pt-6 border-t hairline flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] text-white/40">
+    <div>
+      Adapted from
+      <a href="https://cinematography.net/edited-pages/exposure.html" target="_blank" rel="noopener"
+         class="underline decoration-white/20 underline-offset-2 hover:text-white hover:decoration-accent transition-colors">this chart on CML/cinematography.net</a>
+      in memory of Geoff Boyle NSC FBKS
+    </div>
+    <div class="mono">Built by engineers who care about pixels.</div>
+  </footer>
+
+</main>
 
 <script>
 (function() {
-  // Data
+  'use strict';
+
+  // ---------- Data ----------
   var ISOS = [100, 160, 200, 320, 400, 640, 800, 1280, 1600, 2500, 3200, 4000, 6400];
 
   var TSTOPS = [
-    { label: 'T2.8',  value: 2.8,  type: 'full' },
+    { label: 'T2.8',    value: 2.8,  type: 'full' },
     { label: 'T.Good*', value: 3.3,  type: 'tgood' },
-    { label: 'T4',    value: 4,    type: 'full' },
-    { label: '/',     value: 4.8,  type: 'half' },
-    { label: 'T5.6',  value: 5.6,  type: 'full' },
-    { label: '/',     value: 6.7,  type: 'half' },
-    { label: 'T8',    value: 8,    type: 'full' },
-    { label: '/',     value: 9.5,  type: 'half' },
-    { label: 'T11',   value: 11,   type: 'full' },
-    { label: '/',     value: 13.5, type: 'half' },
-    { label: 'T16',   value: 16,   type: 'full' },
-    { label: '/',     value: 19,   type: 'half' },
-    { label: 'T22',   value: 22,   type: 'full' }
+    { label: 'T4',      value: 4,    type: 'full' },
+    { label: '/',       value: 4.8,  type: 'half' },
+    { label: 'T5.6',    value: 5.6,  type: 'full' },
+    { label: '/',       value: 6.7,  type: 'half' },
+    { label: 'T8',      value: 8,    type: 'full' },
+    { label: '/',       value: 9.5,  type: 'half' },
+    { label: 'T11',     value: 11,   type: 'full' },
+    { label: '/',       value: 13.5, type: 'half' },
+    { label: 'T16',     value: 16,   type: 'full' },
+    { label: '/',       value: 19,   type: 'half' },
+    { label: 'T22',     value: 22,   type: 'full' }
   ];
 
-  // The exposure value sequence (1/3-stop increments, practical rounding)
+  // 1/3-stop value ladder with practical rounding (anchor: idx 12 = 100 fc = T2.8 @ ISO 100)
   var VALS = [1.56, 2.35, 3.13, 4.7, 6.25, 9.375, 12.5, 18.75, 25, 37.5, 50, 75, 100,
               150, 200, 300, 400, 600, 800, 1200, 1600, 2400, 3200, 4800, 6400];
 
-  // Index 12 = 100 fc = T2.8 @ ISO 100 (the anchor)
-  // For row r, col c: val_index = 12 + r - c
   function getFC(row, col) {
     var idx = 12 + row - col;
     if (idx < 0 || idx >= VALS.length) return null;
     return VALS[idx];
   }
 
-  // Format fc value for display — match spreadsheet precision
+  // Format a T-stop row label for the readout card: half/tgood rows become
+  // "T{prev}-{next} SPLIT" by looking at the adjacent full stops.
+  function tstopDisplay(r) {
+    var ts = TSTOPS[r];
+    if (ts.type === 'full') return ts.label;
+    var prev = null, next = null;
+    for (var i = r - 1; i >= 0; i--) { if (TSTOPS[i].type === 'full') { prev = TSTOPS[i]; break; } }
+    for (var j = r + 1; j < TSTOPS.length; j++) { if (TSTOPS[j].type === 'full') { next = TSTOPS[j]; break; } }
+    if (prev && next) {
+      return prev.label + '-' + next.label.replace(/^T/, '') + ' SPLIT';
+    }
+    return ts.label;
+  }
+
   function fmtFC(fc) {
     if (fc === null) return '\u2014';
-    // Show exact value: strip trailing zeros after decimal
     if (fc === Math.floor(fc)) return fc.toLocaleString();
-    // Up to 3 decimal places, then strip trailing zeros
     var s = fc.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
     return s;
   }
 
-  // Light level references
   var LIGHT_REFS = [
-    { label: '"Standard" candle at 1ft', fc: 1 },
-    { label: 'Dimly lit interior', fc: 5 },
-    { label: 'Living room (evening)', fc: 20 },
-    { label: 'Office fluorescent', fc: 50 },
-    { label: 'Well-lit office', fc: 100 },
-    { label: 'TV studio lighting', fc: 150 },
-    { label: 'Bright interior / overcast ext.', fc: 250 },
-    { label: 'Bright overcast day', fc: 500 },
-    { label: 'Hazy sun', fc: 1000 },
-    { label: 'Sunny day (open shade)', fc: 2500 },
-    { label: 'Direct sunlight', fc: 5000 },
-    { label: 'Bright sunlight (sand/snow)', fc: 8000 },
-    { label: 'Ghetto bird (Midnight Club II)', fc: 16000 }
+    { label: '"Standard" candle at 1 ft',      fc: 1 },
+    { label: 'Dimly lit interior',             fc: 5 },
+    { label: 'Living room (evening)',          fc: 20 },
+    { label: 'Office fluorescent',             fc: 50 },
+    { label: 'Well-lit office',                fc: 100 },
+    { label: 'TV studio lighting',             fc: 150 },
+    { label: 'Bright interior / overcast ext', fc: 250 },
+    { label: 'Bright overcast day',            fc: 500 },
+    { label: 'Hazy sun',                       fc: 1000 },
+    { label: 'Sunny day (open shade)',         fc: 2500 },
+    { label: 'Direct sunlight',                fc: 5000 },
+    { label: 'Bright sunlight (sand/snow)',    fc: 8000 },
+    { label: 'LAPD Ghetto bird (Midnight Club II)', fc: 16000 }
   ];
 
-  // State
+  // ---------- State ----------
   var selectedRow = -1;
   var selectedCol = -1;
   var showHeatmap = true;
   var showHalfStops = true;
   var lightTarget = null;
 
-  // Build table
+  // ---------- Build ----------
   function buildTable() {
     var thead = document.getElementById('table-head');
     var headerHTML = '<tr><th>T-Stop \\ ISO</th>';
@@ -416,51 +505,57 @@
       for (var c = 0; c < ISOS.length; c++) {
         var fc = getFC(r, c);
         bodyHTML += '<td class="data-cell" id="cell-' + r + '-' + c + '" ' +
-          'data-row="' + r + '" data-col="' + c + '" data-fc="' + fc + '">' +
-          fmtFC(fc) + '</td>';
+                    'data-row="' + r + '" data-col="' + c + '" data-fc="' + fc + '">' +
+                    fmtFC(fc) + '</td>';
       }
       bodyHTML += '</tr>';
     }
     tbody.innerHTML = bodyHTML;
 
-    // Add click handlers
-    var cells = tbody.querySelectorAll('.data-cell');
-    cells.forEach(function(cell) {
+    tbody.querySelectorAll('.data-cell').forEach(function(cell) {
       cell.addEventListener('click', function() {
-        var r = parseInt(this.dataset.row);
-        var c = parseInt(this.dataset.col);
-        selectCell(r, c);
+        selectCell(parseInt(this.dataset.row, 10), parseInt(this.dataset.col, 10));
       });
     });
   }
 
+  function buildLightRefs() {
+    var html = '';
+    LIGHT_REFS.forEach(function(ref) {
+      html += '<div class="light-ref"><span class="light-ref-label">' + ref.label +
+              '</span><span class="light-ref-val">' + ref.fc.toLocaleString() + ' fc</span></div>';
+    });
+    document.getElementById('light-refs').innerHTML = html;
+  }
+
+  // ---------- Selection ----------
   function selectCell(r, c) {
     selectedRow = r;
     selectedCol = c;
     updateHighlights();
 
     var fc = getFC(r, c);
-    document.getElementById('readout-fc').innerHTML = fmtFC(fc) + ' <span class="unit">fc</span>';
+    document.getElementById('readout-fc').textContent = fmtFC(fc);
     document.getElementById('readout-detail').textContent =
-      TSTOPS[r].label + ' @ ISO ' + ISOS[c].toLocaleString();
+      TSTOPS[r].label + '   ·   ISO ' + ISOS[c].toLocaleString();
 
-    // Extra readout
     var extra = document.getElementById('extra-readout');
-    extra.style.display = 'flex';
+    extra.style.display = 'grid';
 
     // Lux (1 fc ≈ 10.764 lux)
     var lux = fc * 10.764;
-    document.getElementById('readout-lux').innerHTML =
-      (lux >= 10 ? Math.round(lux).toLocaleString() : lux.toFixed(1)) + ' <span class="unit">lux</span>';
+    document.getElementById('readout-lux').textContent =
+      (lux >= 10 ? Math.round(lux).toLocaleString() : lux.toFixed(1));
 
-    // EV₁₀₀ = log₂(E_lux × ISO / C) where C=250 (incident meter calibration), ISO=100
-    // Simplifies to log₂(lux / 2.5)
+    // EV100 = log2(lux / 2.5)
     var ev100 = Math.log2(lux / 2.5);
     document.getElementById('readout-ev').textContent = ev100.toFixed(1);
+
+    document.getElementById('readout-tstop').textContent = tstopDisplay(r);
+    document.getElementById('readout-iso').textContent = ISOS[c].toLocaleString();
   }
 
   function updateHighlights() {
-    // Clear all highlights
     var allCells = document.querySelectorAll('.data-cell');
     allCells.forEach(function(cell) {
       cell.classList.remove('highlight-row', 'highlight-col', 'highlight-cross', 'match-exact', 'match-close');
@@ -468,38 +563,33 @@
     document.querySelectorAll('th').forEach(function(th) { th.classList.remove('highlight-col'); });
     document.querySelectorAll('.row-header').forEach(function(rh) { rh.classList.remove('highlight-row'); });
 
-    // Selection highlights
     if (selectedRow >= 0 && selectedCol >= 0) {
       for (var c = 0; c < ISOS.length; c++) {
-        var cell = document.getElementById('cell-' + selectedRow + '-' + c);
-        if (cell) cell.classList.add('highlight-row');
+        var rc = document.getElementById('cell-' + selectedRow + '-' + c);
+        if (rc) rc.classList.add('highlight-row');
       }
       for (var r = 0; r < TSTOPS.length; r++) {
-        var cell = document.getElementById('cell-' + r + '-' + selectedCol);
-        if (cell) cell.classList.add('highlight-col');
+        var cc = document.getElementById('cell-' + r + '-' + selectedCol);
+        if (cc) cc.classList.add('highlight-col');
       }
       var cross = document.getElementById('cell-' + selectedRow + '-' + selectedCol);
       if (cross) cross.classList.add('highlight-cross');
-
-      document.getElementById('th-' + selectedCol).classList.add('highlight-col');
-      document.getElementById('rh-' + selectedRow).classList.add('highlight-row');
+      var thSel = document.getElementById('th-' + selectedCol);
+      if (thSel) thSel.classList.add('highlight-col');
+      var rhSel = document.getElementById('rh-' + selectedRow);
+      if (rhSel) rhSel.classList.add('highlight-row');
     }
 
-    // Light level matching
     if (lightTarget !== null && lightTarget > 0) {
       allCells.forEach(function(cell) {
         var fc = parseFloat(cell.dataset.fc);
         if (isNaN(fc)) return;
         var ratio = fc / lightTarget;
-        if (ratio >= 0.95 && ratio <= 1.05) {
-          cell.classList.add('match-exact');
-        } else if (ratio >= 0.5 && ratio <= 2.0) {
-          cell.classList.add('match-close');
-        }
+        if (ratio >= 0.95 && ratio <= 1.05) cell.classList.add('match-exact');
+        else if (ratio >= 0.5 && ratio <= 2.0) cell.classList.add('match-close');
       });
     }
 
-    // Heat map
     applyHeatmap();
   }
 
@@ -511,58 +601,55 @@
         cell.style.color = '';
         return;
       }
-
-      // Skip if has other highlight
+      // Skip if another highlight already owns the cell
       if (cell.classList.contains('highlight-cross') ||
           cell.classList.contains('match-exact') ||
           cell.classList.contains('match-close')) {
+        cell.style.backgroundColor = '';
         return;
       }
 
       var fc = parseFloat(cell.dataset.fc);
       if (isNaN(fc)) return;
 
-      // Log scale: map fc range to hue
-      var logMin = Math.log10(1);     // ~1 fc
-      var logMax = Math.log10(7000);  // ~7000 fc
+      // Log scale: 1 fc → 7000 fc maps to dim-cool → warm-amber
+      var logMin = 0;                       // log10(1)
+      var logMax = Math.log10(7000);
       var logVal = Math.log10(Math.max(fc, 1));
-      var t = (logVal - logMin) / (logMax - logMin); // 0 = dark, 1 = bright
+      var t = (logVal - logMin) / (logMax - logMin); // 0..1
 
-      // Dark scenes = cool blue/purple, bright = warm amber/yellow
       var h, s, l;
-      if (t < 0.3) {
-        // Very low light: deep blue-purple
-        h = 240 + (1 - t / 0.3) * 30;
-        s = 40; l = 12 + t * 15;
-      } else if (t < 0.6) {
-        // Mid: teal to green
-        h = 180 - ((t - 0.3) / 0.3) * 40;
-        s = 30; l = 16 + (t - 0.3) * 20;
+      if (t < 0.30) {
+        // very low light — deep indigo
+        h = 245 + (1 - t / 0.30) * 20;
+        s = 38; l = 10 + t * 14;
+      } else if (t < 0.62) {
+        // mid — teal
+        h = 190 - ((t - 0.30) / 0.32) * 30;
+        s = 32; l = 14 + (t - 0.30) * 22;
       } else {
-        // Bright: amber to yellow
-        h = 40 - ((t - 0.6) / 0.4) * 10;
-        s = 50; l = 18 + (t - 0.6) * 15;
+        // bright — amber/orange
+        h = 40 - ((t - 0.62) / 0.38) * 16;
+        s = 55; l = 20 + (t - 0.62) * 16;
       }
-
       cell.style.backgroundColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
       cell.style.color = '';
     });
   }
 
-  // Light refs
-  function buildLightRefs() {
-    var html = '';
-    LIGHT_REFS.forEach(function(ref) {
-      html += '<div class="light-ref"><span>' + ref.label + '</span><span class="light-ref-val">' +
-        ref.fc.toLocaleString() + ' fc</span></div>';
-    });
-    document.getElementById('light-refs').innerHTML = html;
+  // ---------- Events ----------
+  function deselectCell() {
+    selectedRow = -1;
+    selectedCol = -1;
+    document.getElementById('readout-fc').textContent = '\u2014';
+    document.getElementById('readout-detail').textContent = 'Click any cell';
+    document.getElementById('extra-readout').style.display = 'none';
   }
 
-  // Event handlers
   document.getElementById('light-input').addEventListener('input', function() {
     var v = parseFloat(this.value);
     lightTarget = isNaN(v) ? null : v;
+    if (lightTarget !== null && lightTarget > 0) deselectCell();
     updateHighlights();
   });
 
@@ -592,12 +679,13 @@
     });
   });
 
-  // Init
+  // ---------- Init ----------
   buildTable();
   buildLightRefs();
-  // Default selection: T.Good (row 1) @ ISO 800 (col 6) = 18.75 fc
+  // Default pin: T.Good @ ISO 800 = 18.75 fc
   selectCell(1, 6);
   updateHighlights();
+  if (window.lucide) window.lucide.createIcons();
 })();
 </script>
 </body>
