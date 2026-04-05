@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="img/incident-exposure.png">
+</p>
+
 # Incident Exposure Calculator
 
 An interactive cinematography exposure table for quickly looking up the incident foot candles needed from the key for many combinations of ISO and T-Stop. Assumes 24 fps (or 23.98) with a 180° shutter angle.
