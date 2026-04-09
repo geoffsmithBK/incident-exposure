@@ -161,12 +161,14 @@
     text-transform: uppercase;
     position: sticky; top: 0; z-index: 3;
     border-bottom: 1px solid rgba(255,255,255,0.12);
+    cursor: pointer;
   }
   table.matrix thead th:first-child {
     position: sticky; left: 0; z-index: 4;
     background: rgba(20,23,32,1);
     text-align: right;
     padding-right: 14px;
+    cursor: default;
   }
   table.matrix tbody td.row-header {
     position: sticky; left: 0; z-index: 2;
@@ -179,10 +181,10 @@
     color: #c7cbd6;
     border-right: 1px solid rgba(255,255,255,0.12);
     min-width: 84px;
+    cursor: pointer;
   }
   table.matrix tbody td.row-header.full-stop { color: #fff; letter-spacing: 0.02em; }
   table.matrix tbody td.row-header.half-stop { color: #5f6679; font-weight: 400; font-size: 11px; }
-  table.matrix tbody td.row-header.tgood      { color: #fbbf24; font-style: italic; }
 
   table.matrix td.data-cell {
     color: #d3d7e0;
@@ -240,6 +242,19 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
+  /* ===== Print ===== */
+  @media print {
+    body { background: #fff !important; color: #000 !important; }
+    .card { background: none !important; border: 1px solid #ccc !important; backdrop-filter: none !important; }
+    header, footer, #extra-readout, .ghost-btn, #light-input, #light-clear { display: none !important; }
+    table.matrix thead th { background: #eee !important; color: #000 !important; position: static !important; }
+    table.matrix tbody td.row-header { background: #f5f5f5 !important; color: #000 !important; position: static !important; }
+    table.matrix td.data-cell { color: #000 !important; background: none !important; }
+    table.matrix td, table.matrix th { border-color: #ccc !important; }
+    .table-wrap { overflow: visible !important; }
+    table.matrix { min-width: 0 !important; font-size: 9px !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 </style>
 </head>
 <body class="min-h-screen">
@@ -274,12 +289,12 @@
         Match incident light to exposure. <span class="text-white/50">Instantly.</span>
       </h2>
       <p class="text-sm text-white/55 mt-2 max-w-2xl">
-        Incident foot candles required for key exposure at 24&nbsp;fps / 180° shutter. Click any cell to pin a reading, or type an ambient fc to find the closest matching stops across ISO @ <strong class="font-bold text-white/75">24 FPS + 180° shutter</strong>.
+        Incident foot candles required for key exposure at 24&nbsp;fps / 180° shutter. Click any cell to pin a reading, or enter a value to find the closest matching stops across ISO @ <strong class="font-bold text-white/75">24 FPS + 180° shutter</strong>.
       </p>
     </div>
   </div>
 
-  <!-- Top controls: three cards -->
+  <!-- Primary readout: three most important cards -->
   <div class="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr] gap-4 sm:gap-5 mb-5 sm:mb-6">
 
     <!-- Selected Exposure -->
@@ -291,72 +306,66 @@
         <span id="readout-fc" class="stat-value text-[34px] sm:text-[42px] font-bold">—</span>
         <span class="stat-value text-[22px] sm:text-[26px] font-bold text-white/40">fc</span>
       </div>
-      <div class="text-[11px] text-white/45 mt-1 mono" id="readout-detail">Click any cell</div>
     </div>
 
-    <!-- Find by available light -->
+    <!-- T-Stop -->
     <div class="card p-5">
-      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
-        <i data-lucide="sun" class="w-3.5 h-3.5"></i> FIND BY AVAILABLE LIGHT
-      </div>
-      <div class="mt-3 flex items-center gap-2">
-        <input type="number" id="light-input" placeholder="e.g. 50" min="0" step="1" class="flex-1">
-        <span class="text-[11px] text-white/50 mono">fc</span>
-        <button class="ghost-btn" id="light-clear" title="Clear">CLEAR</button>
-      </div>
-      <div class="text-[11px] text-white/45 mt-2 flex items-center gap-2">
-        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm" style="background:#a3e635"></span>±5%</span>
-        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm" style="background:#fbbf24"></span>within ±1&nbsp;stop</span>
-      </div>
-    </div>
-
-    <!-- Display toggles -->
-    <div class="card p-5">
-      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
-        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> DISPLAY
-      </div>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <button class="ghost-btn active" id="btn-heatmap" title="Color-code values by light level">HEAT MAP</button>
-        <button class="ghost-btn active" id="btn-halfstops" title="Show/hide half-stop rows">HALF STOPS</button>
-      </div>
-      <div class="text-[11px] text-white/45 mt-2.5 mono">visual density options</div>
-    </div>
-
-  </div>
-
-  <!-- Extra readout (appears when a cell is selected) -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6" id="extra-readout" style="display:none;">
-    <div class="card p-4 sm:p-5">
-      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
-        <i data-lucide="activity" class="w-3.5 h-3.5"></i> EXPOSURE VALUE
-      </div>
-      <div class="mt-2 flex items-baseline gap-1.5">
-        <span id="readout-ev" class="stat-value text-[30px] sm:text-[34px] font-bold">—</span>
-        <span class="text-white/40 text-[11px] font-medium mono mb-1">EV₁₀₀</span>
-      </div>
-    </div>
-    <div class="card p-4 sm:p-5">
-      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
-        <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i> ILLUMINANCE
-      </div>
-      <div class="mt-2 flex items-baseline gap-1.5">
-        <span id="readout-lux" class="stat-value text-[30px] sm:text-[34px] font-bold">—</span>
-        <span class="stat-value text-[20px] sm:text-[22px] font-bold text-white/40">lux</span>
-      </div>
-    </div>
-    <div class="card p-4 sm:p-5">
       <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
         <i data-lucide="camera" class="w-3.5 h-3.5"></i> T-STOP
       </div>
-      <div class="mt-2 stat-value text-[30px] sm:text-[34px] font-bold" id="readout-tstop">—</div>
+      <div class="mt-2 stat-value text-[34px] sm:text-[42px] font-bold" id="readout-tstop">—</div>
     </div>
-    <div class="card p-4 sm:p-5">
+
+    <!-- Sensitivity -->
+    <div class="card p-5">
       <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
         <i data-lucide="film" class="w-3.5 h-3.5"></i> SENSITIVITY
       </div>
       <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="stat-value text-[30px] sm:text-[34px] font-bold" id="readout-iso">—</span>
-        <span class="text-white/40 text-[11px] font-medium mono mb-1">ISO</span>
+        <span class="stat-value text-[34px] sm:text-[42px] font-bold" id="readout-iso">—</span>
+        <span class="stat-value text-[22px] sm:text-[26px] font-bold text-white/40">ISO</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Secondary readout + tools -->
+  <div class="grid grid-cols-2 md:grid-cols-[1fr_1fr_auto_auto] gap-3 sm:gap-4 mb-5 sm:mb-6" id="extra-readout" style="display:none;">
+    <div class="card p-3 sm:p-4">
+      <div class="flex items-center gap-2 text-white/30 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="activity" class="w-3.5 h-3.5"></i> EXPOSURE VALUE (EV)
+      </div>
+      <div class="mt-1 flex items-baseline gap-1.5">
+        <span id="readout-ev" class="stat-value text-[22px] sm:text-[26px] font-bold text-white/50">—</span>
+        <span class="stat-value text-[16px] sm:text-[18px] font-bold text-white/25">EV₁₀₀</span>
+      </div>
+    </div>
+    <div class="card p-3 sm:p-4">
+      <div class="flex items-center gap-2 text-white/30 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i> ILLUMINANCE
+      </div>
+      <div class="mt-1 flex items-baseline gap-1.5">
+        <span id="readout-lux" class="stat-value text-[22px] sm:text-[26px] font-bold text-white/50">—</span>
+        <span class="stat-value text-[16px] sm:text-[18px] font-bold text-white/25">lux</span>
+      </div>
+    </div>
+    <div class="card p-3 sm:p-4">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="sun" class="w-3.5 h-3.5"></i> FIND BY AVAILABLE LIGHT
+      </div>
+      <div class="mt-2 flex items-center gap-2">
+        <input type="number" id="light-input" placeholder="e.g. 50" min="0" step="1" class="flex-1">
+        <span class="text-[11px] text-white/50 mono">fc</span>
+        <button class="ghost-btn" id="light-clear" title="Clear">CLEAR</button>
+      </div>
+    </div>
+    <div class="card p-3 sm:p-4">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> DISPLAY
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button class="ghost-btn" id="btn-heatmap" title="Color-code values by light level">HEAT MAP</button>
+        <button class="ghost-btn active" id="btn-halfstops" title="Show/hide half-stop rows">HALF STOPS</button>
       </div>
     </div>
   </div>
@@ -389,9 +398,8 @@
     <div class="section-title mb-3">Notes</div>
     <div class="text-[12.5px] text-white/65 leading-relaxed space-y-2">
       <p>Reflected readings also valid at camera position if made from an 18% grey target.</p>
-      <p>1 foot candle = 1 lumen/sq. foot = <span class="mono text-white">10.76 lux</span> (SI unit for <span class="text-white">illuminance</span>).</p>
-      <p>If R(eflectance) = 1.0, then 1 foot candle = 1 foot-lambert = <span class="mono text-white">3.426 cd/m²</span> (SI unit for <span class="text-white">luminance</span>).</p>
-      <p><span class="text-amber2 italic font-semibold">T.Good</span> (pronounced &ldquo;tee-dot-good&rdquo;) — the half-stop split between T2.8 and T4. East Coast convention for a default/starting-point lens aperture, such as when the DP has not yet called out a stop.</p>
+      <p>1 foot candle = 1 lumen/sq. foot = <span class="mono text-white">10.76 lux</span> (SI unit for <a href="https://en.wikipedia.org/wiki/Illuminance" target="_blank" rel="noopener" class="underline decoration-white/20 underline-offset-2 hover:text-white hover:decoration-accent transition-colors text-white">illuminance</a>).</p>
+      <p>If R(eflectance) = 1.0, then 1 foot candle = 1 foot-lambert = <span class="mono text-white">3.426 cd/m²</span> (SI unit for <a href="https://en.wikipedia.org/wiki/Luminance" target="_blank" rel="noopener" class="underline decoration-white/20 underline-offset-2 hover:text-white hover:decoration-accent transition-colors text-white">luminance</a>).</p>
     </div>
   </div>
 
@@ -399,10 +407,11 @@
     <div>
       Adapted from
       <a href="https://cinematography.net/edited-pages/exposure.html" target="_blank" rel="noopener"
-         class="underline decoration-white/20 underline-offset-2 hover:text-white hover:decoration-accent transition-colors">this chart on CML/cinematography.net</a>
-      in memory of Geoff Boyle NSC FBKS
+         class="underline decoration-white/20 underline-offset-2 hover:text-white hover:decoration-accent transition-colors">this chart on CML</a> + in memory of <a href="https://cml.news/g/cml-announcements/topic/geoff_boyle_nsc_fbks/86099767" target="_blank" rel="noopener"
+         class="underline decoration-white/20 underline-offset-2 hover:text-white hover:decoration-accent transition-colors">Geoff Boyle NSC FBKS</a>.
     </div>
-    <div class="mono">Built by engineers who care about pixels.</div>
+    <div class="mono"><a href="https://github.com/geoffsmithBK" target="_blank" rel="noopener"
+         class="underline decoration-white/20 underline-offset-2 hover:text-white hover:decoration-accent transition-colors">Built by engineers who care about pixels.</a></div>
   </footer>
 
 </main>
@@ -416,7 +425,7 @@
 
   var TSTOPS = [
     { label: 'T2.8',    value: 2.8,  type: 'full' },
-    { label: 'T.Good*', value: 3.3,  type: 'tgood' },
+    { label: '/',        value: 3.3,  type: 'half' },
     { label: 'T4',      value: 4,    type: 'full' },
     { label: '/',       value: 4.8,  type: 'half' },
     { label: 'T5.6',    value: 5.6,  type: 'full' },
@@ -449,7 +458,7 @@
     for (var i = r - 1; i >= 0; i--) { if (TSTOPS[i].type === 'full') { prev = TSTOPS[i]; break; } }
     for (var j = r + 1; j < TSTOPS.length; j++) { if (TSTOPS[j].type === 'full') { next = TSTOPS[j]; break; } }
     if (prev && next) {
-      return prev.label + '-' + next.label.replace(/^T/, '') + ' SPLIT';
+      return prev.label + '\u2013' + next.label.replace(/^T/, '') + ' <span class="stat-value text-[22px] sm:text-[26px] font-bold text-white/40">SPLIT</span>';
     }
     return ts.label;
   }
@@ -480,7 +489,7 @@
   // ---------- State ----------
   var selectedRow = -1;
   var selectedCol = -1;
-  var showHeatmap = true;
+  var showHeatmap = false;
   var showHalfStops = true;
   var lightTarget = null;
 
@@ -517,6 +526,22 @@
         selectCell(parseInt(this.dataset.row, 10), parseInt(this.dataset.col, 10));
       });
     });
+
+    thead.querySelectorAll('th[id]').forEach(function(th) {
+      th.addEventListener('click', function() {
+        var c = parseInt(this.id.replace('th-', ''), 10);
+        var r = selectedRow >= 0 ? selectedRow : 0;
+        selectCell(r, c);
+      });
+    });
+
+    tbody.querySelectorAll('.row-header').forEach(function(rh) {
+      rh.addEventListener('click', function() {
+        var r = parseInt(this.id.replace('rh-', ''), 10);
+        var c = selectedCol >= 0 ? selectedCol : 0;
+        selectCell(r, c);
+      });
+    });
   }
 
   function buildLightRefs() {
@@ -532,13 +557,11 @@
   function selectCell(r, c) {
     selectedRow = r;
     selectedCol = c;
+    history.replaceState(null, '', '#r=' + r + '&c=' + c);
     updateHighlights();
 
     var fc = getFC(r, c);
     document.getElementById('readout-fc').textContent = fmtFC(fc);
-    document.getElementById('readout-detail').textContent =
-      TSTOPS[r].label + '   ·   ISO ' + ISOS[c].toLocaleString();
-
     var extra = document.getElementById('extra-readout');
     extra.style.display = 'grid';
 
@@ -551,7 +574,7 @@
     var ev100 = Math.log2(lux / 2.5);
     document.getElementById('readout-ev').textContent = ev100.toFixed(1);
 
-    document.getElementById('readout-tstop').textContent = tstopDisplay(r);
+    document.getElementById('readout-tstop').innerHTML = tstopDisplay(r);
     document.getElementById('readout-iso').textContent = ISOS[c].toLocaleString();
   }
 
@@ -642,14 +665,12 @@
     selectedRow = -1;
     selectedCol = -1;
     document.getElementById('readout-fc').textContent = '\u2014';
-    document.getElementById('readout-detail').textContent = 'Click any cell';
     document.getElementById('extra-readout').style.display = 'none';
   }
 
   document.getElementById('light-input').addEventListener('input', function() {
     var v = parseFloat(this.value);
     lightTarget = isNaN(v) ? null : v;
-    if (lightTarget !== null && lightTarget > 0) deselectCell();
     updateHighlights();
   });
 
@@ -679,11 +700,48 @@
     });
   });
 
+  // ---------- Keyboard navigation ----------
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT') return;
+    var r = selectedRow, c = selectedCol;
+    if (r < 0 || c < 0) return;
+    var moved = false;
+    if (e.key === 'ArrowUp')    { if (r > 0) { r--; moved = true; } }
+    else if (e.key === 'ArrowDown')  { if (r < TSTOPS.length - 1) { r++; moved = true; } }
+    else if (e.key === 'ArrowLeft')  { if (c > 0) { c--; moved = true; } }
+    else if (e.key === 'ArrowRight') { if (c < ISOS.length - 1) { c++; moved = true; } }
+    else if (e.key === 'Escape') { deselectCell(); history.replaceState(null, '', ' '); e.preventDefault(); return; }
+    if (moved) {
+      // Skip hidden half-stop rows
+      if (!showHalfStops && TSTOPS[r].type === 'half') {
+        r += (e.key === 'ArrowUp' ? -1 : 1);
+        if (r < 0 || r >= TSTOPS.length) return;
+      }
+      e.preventDefault();
+      selectCell(r, c);
+    }
+  });
+
   // ---------- Init ----------
   buildTable();
   buildLightRefs();
-  // Default pin: T.Good @ ISO 800 = 18.75 fc
-  selectCell(1, 6);
+
+  // Restore selection from URL hash, or use default
+  var hash = window.location.hash.substring(1);
+  var hashR = hash.match(/r=(\d+)/);
+  var hashC = hash.match(/c=(\d+)/);
+  if (hashR && hashC) {
+    var initR = parseInt(hashR[1], 10);
+    var initC = parseInt(hashC[1], 10);
+    if (initR >= 0 && initR < TSTOPS.length && initC >= 0 && initC < ISOS.length) {
+      selectCell(initR, initC);
+    } else {
+      selectCell(1, 6);
+    }
+  } else {
+    // Default pin: T.Good @ ISO 800 = 18.75 fc
+    selectCell(1, 6);
+  }
   updateHighlights();
   if (window.lucide) window.lucide.createIcons();
 })();
