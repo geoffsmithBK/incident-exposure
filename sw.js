@@ -1,6 +1,6 @@
 // Offline support for the Incident Exposure Matrix.
 // Bump VERSION whenever the precache list changes, to drop the old caches.
-var VERSION = 'v1';
+var VERSION = 'v1.2';
 var CACHE = 'incident-exposure-' + VERSION;
 
 var PRECACHE = [
