@@ -180,7 +180,7 @@
   }
   table.matrix tbody td.row-header {
     position: sticky; left: 0; z-index: 2;
-    background: rgba(20,23,32,0.98);
+    background: rgb(20,23,32);
     text-align: right;
     padding-right: 14px;
     font-family: 'Inter', sans-serif;
@@ -220,7 +220,8 @@
     color: #22d3ee !important;
   }
   table.matrix tbody td.row-header.highlight-row {
-    background: rgba(34,211,238,0.16) !important;
+    /* tint layered over a solid base so scrolled cells never show through */
+    background: linear-gradient(rgba(34,211,238,0.16), rgba(34,211,238,0.16)), rgb(20,23,32) !important;
     color: #22d3ee !important;
   }
 
@@ -302,17 +303,17 @@
     </div>
   </div>
 
-  <!-- Primary readout: three most important cards -->
-  <div class="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr] gap-4 sm:gap-5 mb-5 sm:mb-6">
+  <!-- Primary readout: 2-up on phones/tablets, 4-up on wide screens -->
+  <div class="grid grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr] gap-3 sm:gap-5 mb-5 sm:mb-6">
 
     <!-- Selected Exposure -->
     <div class="card p-5 relative overflow-hidden">
       <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
         <i data-lucide="target" class="w-3.5 h-3.5"></i> SELECTED EXPOSURE
       </div>
-      <div class="mt-2 flex items-baseline gap-1.5">
-        <span id="readout-fc" class="stat-value text-[34px] sm:text-[42px] font-bold">—</span>
-        <span class="stat-value text-[22px] sm:text-[26px] font-bold text-white/40">fc</span>
+      <div class="mt-2 flex flex-wrap items-baseline gap-x-1.5 cursor-pointer select-none" id="readout-fc-toggle">
+        <span id="readout-fc" class="stat-value text-[30px] sm:text-[42px] font-bold">—</span>
+        <span id="readout-fc-unit" class="stat-value text-[22px] sm:text-[26px] font-bold text-white/40">fc</span>
       </div>
     </div>
 
@@ -321,7 +322,7 @@
       <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
         <i data-lucide="camera" class="w-3.5 h-3.5"></i> T-STOP
       </div>
-      <div class="mt-2 stat-value text-[34px] sm:text-[42px] font-bold" id="readout-tstop">—</div>
+      <div class="mt-2 stat-value text-[30px] sm:text-[42px] font-bold" id="readout-tstop">—</div>
     </div>
 
     <!-- Sensitivity -->
@@ -329,34 +330,27 @@
       <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
         <i data-lucide="film" class="w-3.5 h-3.5"></i> SENSITIVITY
       </div>
-      <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="stat-value text-[34px] sm:text-[42px] font-bold" id="readout-iso">—</span>
+      <div class="mt-2 flex flex-wrap items-baseline gap-x-1.5">
+        <span class="stat-value text-[30px] sm:text-[42px] font-bold" id="readout-iso">—</span>
         <span class="stat-value text-[22px] sm:text-[26px] font-bold text-white/40">ISO</span>
+      </div>
+    </div>
+
+    <!-- Exposure Value -->
+    <div class="card p-5">
+      <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
+        <i data-lucide="activity" class="w-3.5 h-3.5"></i> EXPOSURE VALUE
+      </div>
+      <div class="mt-2 flex flex-wrap items-baseline gap-x-1.5">
+        <span id="readout-ev" class="stat-value text-[30px] sm:text-[42px] font-bold">—</span>
+        <span class="stat-value text-[22px] sm:text-[26px] font-bold text-white/40">EV₁₀₀</span>
       </div>
     </div>
 
   </div>
 
   <!-- Secondary readout + tools -->
-  <div class="grid grid-cols-2 md:grid-cols-[1fr_1fr_auto_auto] gap-3 sm:gap-4 mb-5 sm:mb-6" id="extra-readout" style="display:none;">
-    <div class="card p-3 sm:p-4">
-      <div class="flex items-center gap-2 text-white/30 text-[10.5px] font-semibold tracking-[0.12em]">
-        <i data-lucide="activity" class="w-3.5 h-3.5"></i> EXPOSURE VALUE (EV)
-      </div>
-      <div class="mt-1 flex items-baseline gap-1.5">
-        <span id="readout-ev" class="stat-value text-[22px] sm:text-[26px] font-bold text-white/50">—</span>
-        <span class="stat-value text-[16px] sm:text-[18px] font-bold text-white/25">EV₁₀₀</span>
-      </div>
-    </div>
-    <div class="card p-3 sm:p-4">
-      <div class="flex items-center gap-2 text-white/30 text-[10.5px] font-semibold tracking-[0.12em]">
-        <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i> ILLUMINANCE
-      </div>
-      <div class="mt-1 flex items-baseline gap-1.5">
-        <span id="readout-lux" class="stat-value text-[22px] sm:text-[26px] font-bold text-white/50">—</span>
-        <span class="stat-value text-[16px] sm:text-[18px] font-bold text-white/25">lux</span>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6" id="extra-readout" style="display:none;">
     <div class="card p-3 sm:p-4">
       <div class="flex items-center gap-2 text-white/50 text-[10.5px] font-semibold tracking-[0.12em]">
         <i data-lucide="sun" class="w-3.5 h-3.5"></i> FIND BY AVAILABLE LIGHT
@@ -562,6 +556,29 @@
   }
 
   // ---------- Selection ----------
+  // Tapping the selected-exposure value flips it between fc and lux.
+  var showLux = false;
+  try { showLux = localStorage.getItem('illumUnit') === 'lux'; } catch (e) {}
+
+  function renderIlluminance() {
+    var el = document.getElementById('readout-fc');
+    document.getElementById('readout-fc-unit').textContent = showLux ? 'lux' : 'fc';
+    if (selectedRow < 0 || selectedCol < 0) { el.textContent = '\u2014'; return; }
+    var fc = getFC(selectedRow, selectedCol);
+    if (showLux) {
+      var lux = fc * 10.764;
+      el.textContent = lux >= 10 ? Math.round(lux).toLocaleString() : lux.toFixed(1);
+    } else {
+      el.textContent = fmtFC(fc);
+    }
+  }
+
+  document.getElementById('readout-fc-toggle').addEventListener('click', function() {
+    showLux = !showLux;
+    try { localStorage.setItem('illumUnit', showLux ? 'lux' : 'fc'); } catch (e) {}
+    renderIlluminance();
+  });
+
   function selectCell(r, c) {
     selectedRow = r;
     selectedCol = c;
@@ -569,17 +586,12 @@
     updateHighlights();
 
     var fc = getFC(r, c);
-    document.getElementById('readout-fc').textContent = fmtFC(fc);
+    renderIlluminance();
     var extra = document.getElementById('extra-readout');
     extra.style.display = 'grid';
 
-    // Lux (1 fc ≈ 10.764 lux)
-    var lux = fc * 10.764;
-    document.getElementById('readout-lux').textContent =
-      (lux >= 10 ? Math.round(lux).toLocaleString() : lux.toFixed(1));
-
-    // EV100 = log2(lux / 2.5)
-    var ev100 = Math.log2(lux / 2.5);
+    // EV100 = log2(lux / 2.5), with 1 fc ≈ 10.764 lux
+    var ev100 = Math.log2(fc * 10.764 / 2.5);
     document.getElementById('readout-ev').textContent = ev100.toFixed(1);
 
     document.getElementById('readout-tstop').innerHTML = tstopDisplay(r);
@@ -672,7 +684,8 @@
   function deselectCell() {
     selectedRow = -1;
     selectedCol = -1;
-    document.getElementById('readout-fc').textContent = '\u2014';
+    renderIlluminance();
+    document.getElementById('readout-ev').textContent = '\u2014';
     document.getElementById('extra-readout').style.display = 'none';
   }
 
@@ -752,6 +765,21 @@
   }
   updateHighlights();
   if (window.lucide) window.lucide.createIcons();
+
+  // On narrow screens, scroll the table so the selected ISO column sits
+  // near the horizontal center of the viewport. Waits for fonts and
+  // Tailwind styles so the column positions are final.
+  function centerSelectedColumn() {
+    var th = document.getElementById('th-' + selectedCol);
+    var wrap = document.querySelector('.table-wrap');
+    if (!th || !wrap || wrap.scrollWidth <= wrap.clientWidth) return;
+    var rect = th.getBoundingClientRect();
+    wrap.scrollLeft += rect.left + rect.width / 2 - window.innerWidth / 2;
+  }
+  window.addEventListener('load', function () {
+    var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+    fontsReady.then(function () { requestAnimationFrame(centerSelectedColumn); });
+  });
 })();
 
 if ('serviceWorker' in navigator) {

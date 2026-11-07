@@ -25,10 +25,22 @@ The app includes a reference table of typical incident light levels, from candle
 
 ## Usage
 
-No installation needed. It's a single HTML file with no dependencies.
+No installation needed. It's a single HTML file with no build step.
 
 - **Online:** Visit the [live site](https://geoffsmithbk.github.io/incident-exposure/)
 - **Locally:** Open `index.html` in any browser, or serve it with `python3 -m http.server`
+
+### Install on iPad or iPhone
+
+The app can be added to your Home Screen and works offline, which is handy on set with no signal.
+
+1. Open the [live site](https://geoffsmithbk.github.io/incident-exposure/) in **Safari** while online.
+2. Tap the **Share** button, then **Add to Home Screen**.
+3. Launch **Exposure** from the Home Screen. It opens full-screen, like a native app.
+
+After that first visit, everything the app needs is saved on the device. Updates download in the background and appear the next time you open the app.
+
+The same works in Chrome or Edge on desktop and Android (look for the **Install** option in the address bar or menu).
 
 ## Notes
 
