@@ -681,18 +681,25 @@
   }
 
   // ---------- Events ----------
+  // Clears the pinned cell: readouts, row/column highlight and URL hash.
+  // The find/display tools stay visible.
   function deselectCell() {
     selectedRow = -1;
     selectedCol = -1;
     renderIlluminance();
-    document.getElementById('readout-ev').textContent = '\u2014';
-    document.getElementById('extra-readout').style.display = 'none';
+    ['readout-tstop', 'readout-iso', 'readout-ev'].forEach(function(id) {
+      document.getElementById(id).textContent = '\u2014';
+    });
+    history.replaceState(null, '', location.pathname + location.search);
+    updateHighlights();
   }
 
   document.getElementById('light-input').addEventListener('input', function() {
     var v = parseFloat(this.value);
     lightTarget = isNaN(v) ? null : v;
-    updateHighlights();
+    // Searching by light level replaces the pinned selection.
+    if (lightTarget !== null && lightTarget > 0 && selectedRow >= 0) deselectCell();
+    else updateHighlights();
   });
 
   document.getElementById('light-clear').addEventListener('click', function() {
@@ -731,7 +738,7 @@
     else if (e.key === 'ArrowDown')  { if (r < TSTOPS.length - 1) { r++; moved = true; } }
     else if (e.key === 'ArrowLeft')  { if (c > 0) { c--; moved = true; } }
     else if (e.key === 'ArrowRight') { if (c < ISOS.length - 1) { c++; moved = true; } }
-    else if (e.key === 'Escape') { deselectCell(); history.replaceState(null, '', ' '); e.preventDefault(); return; }
+    else if (e.key === 'Escape') { deselectCell(); e.preventDefault(); return; }
     if (moved) {
       // Skip hidden half-stop rows
       if (!showHalfStops && TSTOPS[r].type === 'half') {
