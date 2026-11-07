@@ -4,11 +4,19 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Incident Exposure Matrix</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#07080b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Exposure">
+<link rel="apple-touch-icon" href="img/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/lucide@1.70.0/dist/umd/lucide.min.js"></script>
 <script>
   tailwind.config = {
     theme: {
@@ -745,6 +753,12 @@
   updateHighlights();
   if (window.lucide) window.lucide.createIcons();
 })();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
 </script>
 </body>
 </html>
